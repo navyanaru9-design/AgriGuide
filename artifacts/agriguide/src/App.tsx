@@ -88,6 +88,7 @@ function GoogleIcon({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
+
 function signOut() {
   localStorage.removeItem(TOKEN_KEY);
   queryClient.clear();
@@ -225,14 +226,23 @@ function Router() {
           <main className="flex-1">
             <ErrorBoundary resetKey={location}>
               <Switch>
-                <Route path="/" component={() => <Landing signedIn={signedIn} />} />
-                <Route path="/how-it-works" component={() => <HowItWorksPage signedIn={signedIn} />} />
+                <Route path="/">
+                  <Landing signedIn={signedIn} />
+                </Route>
+                <Route path="/how-it-works">
+                  <HowItWorksPage signedIn={signedIn} />
+                </Route>
                 <Route path="/auth/callback" component={AuthCallbackPage} />
                 <Route path="/login" component={LoginPage} />
                 <Route path="/register" component={RegisterPage} />
+                <Route path="/demo" component={DemoPage} />
                 <Route path="/dashboard" component={DashboardPage} />
-                <Route path="/analysis" component={() => <AnalysisPage lang={lang} />} />
-                <Route path="/analysis/:id" component={() => <AnalysisDetail />} />
+                <Route path="/analysis">
+                  <AnalysisPage lang={lang} />
+                </Route>
+                <Route path="/analysis/:id">
+                  <AnalysisDetail />
+                </Route>
                 <Route path="/farms" component={FarmsPage} />
                 <Route path="/history" component={HistoryPage} />
                 <Route path="/profile" component={ProfilePage} />
@@ -863,6 +873,7 @@ function AuthCallbackPage() {
 function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
   const labels = translations[useContext(LanguageContext)];
   const [, setLocation] = useLocation();
+  const navigateTo = setLocation;
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [error, setError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -886,6 +897,7 @@ function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
       setError(err?.message || 'Unable to connect to Google authentication. Please try again.');
     }
   };
+
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -939,29 +951,9 @@ function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
 
         {error && <ErrorNotice message={error} />}
 
-        {mode === 'register' && (
-          <div className="mt-7">
-            <button
-              type="button"
-              onClick={handleGoogleAuth}
-              disabled={pending}
-              className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-border bg-card px-4 text-sm font-bold text-foreground shadow-sm transition hover:bg-secondary disabled:opacity-50"
-              data-testid="button-google-register"
-            >
-              {googleLoading ? <LoaderCircle size={18} className="animate-spin text-primary" /> : <GoogleIcon />}
-              <span>Continue with Google</span>
-            </button>
-            <p className="mt-2 text-center text-xs text-muted-foreground">
-              Your Google account will be used securely through Supabase.
-            </p>
-            <div className="relative my-6 text-center">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
-              <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-3 font-bold text-muted-foreground">OR</span></div>
-            </div>
-          </div>
-        )}
 
-        <form onSubmit={submit} className={`${mode === 'login' ? 'mt-7' : ''} space-y-4`}>
+
+        <form onSubmit={submit} className="mt-7 space-y-4">
           {mode === 'register' && (
             <label className="block text-sm font-semibold">
               {labels.fullName}
@@ -1024,11 +1016,30 @@ function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
               />
             </label>
           )}
-          <Button type="submit" disabled={pending} testId="button-auth-submit">
-            {pending && !googleLoading && <LoaderCircle size={16} className="mr-2 animate-spin" />}
-            {mode === 'login' ? labels.loginSubmit : labels.registerSubmit}
-            <ArrowRight size={16} className="ml-2" />
-          </Button>
+          {mode === 'register' ? (
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button type="submit" disabled={pending} testId="button-auth-submit">
+                {pending && <LoaderCircle size={16} className="mr-2 animate-spin" />}
+                {labels.registerSubmit}
+                <ArrowRight size={16} className="ml-2" />
+              </Button>
+              <button
+                type="button"
+                onClick={() => navigateTo('/demo')}
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-bold text-foreground transition duration-200 hover:bg-secondary"
+                data-testid="button-show-demo"
+              >
+                Show Demo
+                <svg xmlns="http://www.w3.org/2000/svg" className="ml-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </button>
+            </div>
+          ) : (
+            <Button type="submit" disabled={pending} testId="button-auth-submit">
+              {pending && !googleLoading && <LoaderCircle size={16} className="mr-2 animate-spin" />}
+              {labels.loginSubmit}
+              <ArrowRight size={16} className="ml-2" />
+            </Button>
+          )}
         </form>
 
         {mode === 'login' && (
@@ -1070,6 +1081,257 @@ function AuthPanel({ mode }: { mode: 'login' | 'register' }) {
 
 function LoginPage() { return <AuthPanel mode="login" />; }
 function RegisterPage() { return <AuthPanel mode="register" />; }
+
+// ─── DEMO PAGE ───────────────────────────────────────────────────────────────
+const demoData = {
+  farm: {
+    location: 'Kadapa, Andhra Pradesh, India',
+    soilType: 'Red Soil',
+    waterAvailability: 'Moderate',
+    previousCrop: 'Maize',
+    season: 'Kharif',
+  },
+  crops: [
+    { name: 'Groundnut', score: 92, reasons: ['Red soil is ideal for groundnut', 'Kharif season aligns perfectly', 'Good rotation after Maize'], risk: 'Low' },
+    { name: 'Cotton', score: 78, reasons: ['Tolerates moderate water availability', 'Suitable for Kadapa agro-climate', 'High market demand in region'], risk: 'Moderate' },
+    { name: 'Sunflower', score: 71, reasons: ['Short duration fits Kharif window', 'Drought-tolerant crop', 'Improves soil structure'], risk: 'Low' },
+  ],
+  risks: [
+    { label: 'Water Requirement', value: 55, status: 'Moderate', note: 'Groundnut needs 450–600 mm. Borewell irrigation recommended in dry spells.' },
+    { label: 'Soil Suitability', value: 88, status: 'Good', note: 'Red soil texture and drainage are well-suited for groundnut root development.' },
+    { label: 'Weather Risk', value: 40, status: 'Low', note: 'Kadapa receives 600–800 mm annual rainfall; Kharif onset is generally reliable.' },
+    { label: 'Pest & Disease', value: 62, status: 'Moderate', note: 'Monitor for leaf miner and early leaf spot; preventive fungicide at pod formation.' },
+  ],
+  advisory: `Based on your farm conditions in Kadapa with Red Soil and Moderate water availability, Groundnut is the strongest fit for Kharif 2025.
+
+**Sowing window:** Mid-June to first week of July.
+**Seed rate:** 80–100 kg/ha of certified Bold variety (TMV-2 or K-6).
+**Irrigation:** Apply 3–4 irrigations at critical stages: flowering, pegging, and pod filling.
+**Fertiliser:** Basal dose of 20:40:40 NPK kg/ha. Gypsum application at 500 kg/ha at peg formation improves pod yield.
+**Crop rotation benefit:** Following Maize, the residual nitrogen and improved soil tilth benefit groundnut establishment.
+
+Monitor closely for early leaf spot from 30 days after sowing. Harvest when 75% of pods show darkened inner shell.`,
+};
+
+function DemoPage() {
+  const [, setLocation] = useLocation();
+  const [step, setStep] = useState(0);
+  const steps = ['Farm Details', 'Farm Analysis', 'Crop Recommendations', 'Risk Analysis', 'AI Farm Advisor'];
+
+  const barColor = (status: string) =>
+    status === 'Good' || status === 'Low' ? 'bg-primary' : status === 'Moderate' ? 'bg-[#bd8b3d]' : 'bg-destructive';
+
+  return (
+    <div className="mx-auto min-h-[calc(100dvh-68px)] max-w-[1160px] px-5 py-8 md:px-8 md:py-12">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-bold text-[#bd8b3d]">
+          <span className="h-2 w-2 rounded-full bg-[#bd8b3d]" />
+          Demo Mode — Example Data Only
+        </div>
+        <h1 className="font-display text-3xl font-extrabold tracking-[-.05em] md:text-4xl" data-testid="demo-title">See AgriGuide in Action</h1>
+        <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">This is a walkthrough using static example data. No real farm data, no API calls, no login required.</p>
+      </div>
+
+      {/* Step nav */}
+      <div className="mb-8 flex flex-wrap gap-2">
+        {steps.map((s, i) => (
+          <button
+            key={s}
+            onClick={() => setStep(i)}
+            className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+              step === i ? 'bg-primary text-primary-foreground' : 'border border-border bg-card text-muted-foreground hover:bg-secondary'
+            }`}
+            data-testid={`demo-step-${i}`}
+          >
+            {i + 1}. {s}
+          </button>
+        ))}
+      </div>
+
+      {/* Step 0 — Farm Details */}
+      {step === 0 && (
+        <div className="enter">
+          <div className="rounded-[28px] border border-border bg-card p-6 md:p-8">
+            <p className="text-[11px] font-extrabold uppercase tracking-[.16em] text-primary mb-2">Step 1 — Example Farm</p>
+            <h2 className="font-display text-2xl font-extrabold tracking-tight mb-6">Farm Details</h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {Object.entries(demoData.farm).map(([key, val]) => (
+                <div key={key} className="rounded-xl border border-border bg-background p-4">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[.14em] text-muted-foreground">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
+                  <p className="mt-1 font-bold text-foreground">{val}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-6 rounded-xl bg-accent/30 px-4 py-3 text-xs leading-5 text-muted-foreground">
+              <span className="font-bold">Example only.</span> In a real analysis, you enter your own farm's soil type, water source, season and location. AgriGuide uses these to compute crop suitability scores.
+            </p>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <button onClick={() => setStep(1)} className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground transition hover:-translate-y-0.5 hover:shadow-lg" data-testid="demo-next-0">
+              Next: Farm Analysis <ArrowRight size={15} className="ml-2" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 1 — Farm Analysis */}
+      {step === 1 && (
+        <div className="enter">
+          <div className="rounded-[28px] border border-border bg-card p-6 md:p-8">
+            <p className="text-[11px] font-extrabold uppercase tracking-[.16em] text-primary mb-2">Step 2 — Example Analysis</p>
+            <h2 className="font-display text-2xl font-extrabold tracking-tight mb-4">Farm Analysis</h2>
+            <p className="text-sm leading-6 text-muted-foreground mb-6 max-w-xl">AgriGuide cross-references your farm inputs against a curated crop database using a deterministic suitability engine — no guessing, no black boxes.</p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[['🌱', 'Soil Evaluation', 'Red Soil matched against 47 crop benchmarks for texture, drainage and pH compatibility.'],
+                ['💧', 'Water & Irrigation', 'Moderate availability with Borewell source assessed against each crop\'s seasonal water budget.'],
+                ['🌦️', 'Season & Rotation', 'Kharif season timing and post-Maize rotation impact computed for each candidate crop.']
+              ].map(([icon, title, desc]) => (
+                <div key={title as string} className="rounded-2xl border border-border bg-background p-5">
+                  <span className="text-2xl">{icon}</span>
+                  <p className="mt-3 font-bold">{title}</p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">{desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="mt-4 flex justify-between">
+            <button onClick={() => setStep(0)} className="inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-bold text-foreground transition hover:bg-secondary"><ArrowLeft size={15} className="mr-2" /> Back</button>
+            <button onClick={() => setStep(2)} className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground transition hover:-translate-y-0.5 hover:shadow-lg" data-testid="demo-next-1">Next: Crop Recommendations <ArrowRight size={15} className="ml-2" /></button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 2 — Crop Recommendations */}
+      {step === 2 && (
+        <div className="enter">
+          <div className="rounded-[28px] border border-border bg-card p-6 md:p-8">
+            <p className="text-[11px] font-extrabold uppercase tracking-[.16em] text-primary mb-2">Step 3 — Example Recommendations</p>
+            <h2 className="font-display text-2xl font-extrabold tracking-tight mb-6">Top Crop Recommendations</h2>
+            <div className="grid gap-4 md:grid-cols-3">
+              {demoData.crops.map((crop, idx) => (
+                <div key={crop.name} className={`rounded-2xl border p-5 ${idx === 0 ? 'border-primary/40 bg-accent/20' : 'border-border bg-background'}`}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-[10px] font-extrabold uppercase tracking-[.14em] text-muted-foreground">#{idx + 1} Recommended</p>
+                      <p className="mt-1 font-display text-xl font-extrabold">{crop.name}</p>
+                    </div>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                      crop.risk === 'Low' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                    }`}>{crop.risk} Risk</span>
+                  </div>
+                  <div className="mt-4">
+                    <div className="flex justify-between text-xs font-bold mb-1.5"><span>Suitability</span><span>{crop.score} / 100</span></div>
+                    <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                      <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${crop.score}%` }} />
+                    </div>
+                  </div>
+                  <ul className="mt-4 space-y-1.5">
+                    {crop.reasons.map(r => (
+                      <li key={r} className="flex items-start gap-2 text-xs text-muted-foreground">
+                        <CheckCircle2 size={13} className="mt-0.5 shrink-0 text-primary" />
+                        {r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 rounded-xl bg-accent/30 px-4 py-3 text-xs text-muted-foreground">
+              <span className="font-bold">Example only.</span> Your real results will reflect your actual farm profile and current conditions.
+            </p>
+          </div>
+          <div className="mt-4 flex justify-between">
+            <button onClick={() => setStep(1)} className="inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-bold text-foreground transition hover:bg-secondary"><ArrowLeft size={15} className="mr-2" /> Back</button>
+            <button onClick={() => setStep(3)} className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground transition hover:-translate-y-0.5 hover:shadow-lg" data-testid="demo-next-2">Next: Risk Analysis <ArrowRight size={15} className="ml-2" /></button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3 — Risk Analysis */}
+      {step === 3 && (
+        <div className="enter">
+          <div className="rounded-[28px] border border-border bg-card p-6 md:p-8">
+            <p className="text-[11px] font-extrabold uppercase tracking-[.16em] text-primary mb-2">Step 4 — Example Risk Analysis</p>
+            <h2 className="font-display text-2xl font-extrabold tracking-tight mb-6">Risk Breakdown — Groundnut</h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {demoData.risks.map(r => (
+                <div key={r.label} className="rounded-2xl border border-border bg-background p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="font-bold text-sm">{r.label}</p>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                      r.status === 'Good' || r.status === 'Low' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                    }`}>{r.status}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-secondary mb-3">
+                    <div className={`h-full rounded-full ${barColor(r.status)} transition-all`} style={{ width: `${r.value}%` }} />
+                  </div>
+                  <p className="text-xs leading-5 text-muted-foreground">{r.note}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 rounded-xl bg-accent/30 px-4 py-3 text-xs text-muted-foreground">
+              <span className="font-bold">Example only.</span> Risk scores are computed deterministically for each crop based on your real farm inputs.
+            </p>
+          </div>
+          <div className="mt-4 flex justify-between">
+            <button onClick={() => setStep(2)} className="inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-bold text-foreground transition hover:bg-secondary"><ArrowLeft size={15} className="mr-2" /> Back</button>
+            <button onClick={() => setStep(4)} className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground transition hover:-translate-y-0.5 hover:shadow-lg" data-testid="demo-next-3">Next: AI Advisor <ArrowRight size={15} className="ml-2" /></button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 4 — AI Farm Advisor */}
+      {step === 4 && (
+        <div className="enter">
+          <div className="rounded-[28px] border border-border bg-card p-6 md:p-8">
+            <p className="text-[11px] font-extrabold uppercase tracking-[.16em] text-primary mb-2">Step 5 — Example AI Advisory</p>
+            <h2 className="font-display text-2xl font-extrabold tracking-tight mb-2">AI Farm Advisor</h2>
+            <p className="text-sm text-muted-foreground mb-6">Powered by Gemini AI — synthesises your farm profile into a personalised action plan.</p>
+            <div className="rounded-2xl border border-border bg-background p-5 md:p-6">
+              <div className="mb-4 flex items-center gap-2">
+                <Sparkles size={16} className="text-primary" />
+                <p className="text-xs font-extrabold uppercase tracking-[.14em] text-primary">Example Advisory Response</p>
+                <span className="ml-auto rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700">Demo — Not a real recommendation</span>
+              </div>
+              <div className="prose prose-sm max-w-none text-sm leading-6 text-foreground whitespace-pre-line">{demoData.advisory}</div>
+            </div>
+            <p className="mt-5 rounded-xl bg-accent/30 px-4 py-3 text-xs leading-5 text-muted-foreground">
+              <span className="font-bold">Important:</span> This is example content. Your real advisory is generated by Gemini AI using your actual farm profile. AI guidance supports your judgement — it does not replace agronomists or official advisories.
+            </p>
+          </div>
+
+          {/* Final CTA */}
+          <div className="mt-6 overflow-hidden rounded-[28px] bg-[#274c3f] p-8 text-[#f4f0dc] text-center md:p-10">
+            <p className="text-[11px] font-extrabold uppercase tracking-[.16em] text-[#d8c68f]">Ready to use your own farm data?</p>
+            <h2 className="mt-3 font-display text-2xl font-extrabold tracking-[-.04em] md:text-3xl">Get personalised crop recommendations for your field.</h2>
+            <p className="mt-3 text-sm leading-6 text-[#c7d2c3]">Create a free account to run a real analysis with your soil, water, and location.</p>
+            <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <button
+                onClick={() => setLocation('/register')}
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#d8c68f] px-6 text-sm font-bold text-[#274c3f] transition hover:-translate-y-0.5 hover:shadow-lg"
+                data-testid="demo-cta-register"
+              >
+                Create your account <ArrowRight size={15} className="ml-2" />
+              </button>
+              <button
+                onClick={() => setStep(0)}
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/25 px-5 text-sm font-bold text-[#f4f0dc] transition hover:bg-white/10"
+                data-testid="demo-restart"
+              >
+                Restart demo
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-4 flex justify-start">
+            <button onClick={() => setStep(3)} className="inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-bold text-foreground transition hover:bg-secondary"><ArrowLeft size={15} className="mr-2" /> Back</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function DashboardPage() {
   const labels = translations[useContext(LanguageContext)];
