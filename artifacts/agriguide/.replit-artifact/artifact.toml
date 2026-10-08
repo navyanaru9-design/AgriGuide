@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "AgriGuide"
+description = "A crop recommendation and farm advisory app for farmers. AgriGuide scores crop suitability from soil, region, weather, water, rotation, and season, then provides practical farm guidance."
+version = "1.0.0"
+id = "artifacts/agriguide"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21568
+
+[services.development]
+run = "pnpm --filter @workspace/agriguide run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/agriguide", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/agriguide/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21568"
+BASE_PATH = "/"

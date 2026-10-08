@@ -1,0 +1,512 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication and profile
+  - name: farms
+    description: Farm profile management
+  - name: analyses
+    description: Deterministic farm suitability analyses
+  - name: crops
+    description: Crop knowledge base
+  - name: weather
+    description: Open-Meteo weather
+  - name: advisor
+    description: AI farm advice
+  - name: dashboard
+    description: Dashboard summaries
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /auth/register:
+    post:
+      operationId: registerUser
+      tags: [auth]
+      summary: Register a new account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /auth/login:
+    post:
+      operationId: loginUser
+      tags: [auth]
+      summary: Sign in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /auth/logout:
+    post:
+      operationId: logoutUser
+      tags: [auth]
+      responses:
+        "200":
+          description: Signed out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [auth]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Current profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateProfile
+      tags: [auth]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /farms:
+    get:
+      operationId: listFarms
+      tags: [farms]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Farm profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Farm" }
+    post:
+      operationId: createFarm
+      tags: [farms]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FarmInput" }
+      responses:
+        "201":
+          description: Farm created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Farm" }
+  /farms/{id}:
+    get:
+      operationId: getFarm
+      tags: [farms]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Farm profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Farm" }
+    patch:
+      operationId: updateFarm
+      tags: [farms]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FarmUpdate" }
+      responses:
+        "200":
+          description: Updated farm
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Farm" }
+    delete:
+      operationId: deleteFarm
+      tags: [farms]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Farm deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkResponse" }
+  /analyses:
+    get:
+      operationId: listAnalyses
+      tags: [analyses]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Saved analyses
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Analysis" }
+    post:
+      operationId: createAnalysis
+      tags: [analyses]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnalysisInput" }
+      responses:
+        "201":
+          description: Calculated and saved analysis
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Analysis" }
+  /analyses/{id}:
+    get:
+      operationId: getAnalysis
+      tags: [analyses]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Saved analysis
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Analysis" }
+    delete:
+      operationId: deleteAnalysis
+      tags: [analyses]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Analysis deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkResponse" }
+  /crops:
+    get:
+      operationId: listCrops
+      tags: [crops]
+      responses:
+        "200":
+          description: Crop dataset
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Crop" }
+  /weather:
+    get:
+      operationId: getWeather
+      tags: [weather]
+      parameters:
+        - { name: latitude, in: query, required: true, schema: { type: number, minimum: -90, maximum: 90 } }
+        - { name: longitude, in: query, required: true, schema: { type: number, minimum: -180, maximum: 180 } }
+      responses:
+        "200":
+          description: Current and recent weather
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Weather" }
+  /ai/advice:
+    post:
+      operationId: getAiAdvice
+      tags: [advisor]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdviceInput" }
+      responses:
+        "200":
+          description: Practical farm advice for the saved analysis
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Advice" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    OkResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+      required: [ok]
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        fullName: { type: string }
+        email: { type: string, format: email }
+        createdAt: { type: string, format: date-time }
+      required: [id, fullName, email, createdAt]
+    RegisterInput:
+      type: object
+      properties:
+        fullName: { type: string, minLength: 2, maxLength: 100 }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+      required: [fullName, email, password]
+    LoginInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 1 }
+      required: [email, password]
+    AuthResponse:
+      type: object
+      properties:
+        token: { type: string }
+        user: { $ref: "#/components/schemas/User" }
+      required: [token, user]
+    ProfileUpdate:
+      type: object
+      properties:
+        fullName: { type: string, minLength: 2, maxLength: 100 }
+        currentPassword: { type: string }
+        newPassword: { type: string, minLength: 8 }
+    FarmInput:
+      type: object
+      properties:
+        farmName: { type: string }
+        country: { type: string, minLength: 1 }
+        state: { type: string }
+        district: { type: string }
+        village: { type: string }
+        latitude: { type: ["number", "null"], minimum: -90, maximum: 90 }
+        longitude: { type: ["number", "null"], minimum: -180, maximum: 180 }
+        soilType: { type: string, enum: [Black Soil, Red Soil, Alluvial Soil, Sandy Soil, Loamy Soil, Clay Soil, Laterite Soil] }
+        waterAvailability: { type: string, enum: [Very Low, Low, Moderate, High, Very High] }
+        irrigationSource: { type: string, enum: [Rain-fed, Borewell, Canal, Well, River, Drip, Sprinkler] }
+        previousCrop: { type: string }
+        season: { type: string, enum: [Kharif, Rabi, Summer] }
+      required: [country, soilType, waterAvailability, irrigationSource, previousCrop, season]
+    FarmUpdate:
+      type: object
+      properties:
+        farmName: { type: string }
+        country: { type: string, minLength: 1 }
+        state: { type: string }
+        district: { type: string }
+        village: { type: string }
+        latitude: { type: ["number", "null"], minimum: -90, maximum: 90 }
+        longitude: { type: ["number", "null"], minimum: -180, maximum: 180 }
+        soilType: { type: string, enum: [Black Soil, Red Soil, Alluvial Soil, Sandy Soil, Loamy Soil, Clay Soil, Laterite Soil] }
+        waterAvailability: { type: string, enum: [Very Low, Low, Moderate, High, Very High] }
+        irrigationSource: { type: string, enum: [Rain-fed, Borewell, Canal, Well, River, Drip, Sprinkler] }
+        previousCrop: { type: string }
+        season: { type: string, enum: [Kharif, Rabi, Summer] }
+    Farm:
+      allOf:
+        - { $ref: "#/components/schemas/FarmInput" }
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+          required: [id, createdAt, updatedAt]
+    Weather:
+      type: object
+      properties:
+        temperatureC: { type: ["number", "null"] }
+        rainfallMm: { type: ["number", "null"] }
+        humidityPercent: { type: ["number", "null"] }
+        windKmh: { type: ["number", "null"] }
+        condition: { type: string }
+        source: { type: string }
+        fallback: { type: boolean }
+      required: [temperatureC, rainfallMm, humidityPercent, windKmh, condition, source, fallback]
+    FactorScores:
+      type: object
+      properties:
+        soil: { type: number }
+        location: { type: number }
+        weather: { type: number }
+        water: { type: number }
+        rotation: { type: number }
+        season: { type: number }
+      required: [soil, location, weather, water, rotation, season]
+    CropRecommendation:
+      type: object
+      properties:
+        rank: { type: integer }
+        crop: { type: string }
+        score: { type: number }
+        factors: { $ref: "#/components/schemas/FactorScores" }
+        waterRequirement: { type: string }
+        growthDuration: { type: string }
+        seasons:
+          type: array
+          items: { type: string }
+        why: { type: string }
+        risks:
+          type: array
+          items: { type: string }
+        riskLevel: { type: string, enum: [Low, Moderate, High] }
+      required: [rank, crop, score, factors, waterRequirement, growthDuration, seasons, why, risks, riskLevel]
+    AnalysisInput:
+      allOf:
+        - { $ref: "#/components/schemas/FarmInput" }
+        - type: object
+          properties:
+            farmProfileId: { type: ["string", "null"], format: uuid }
+            weather: { $ref: "#/components/schemas/Weather" }
+          required: [weather]
+    Analysis:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        farmProfileId: { type: ["string", "null"], format: uuid }
+        farm: { $ref: "#/components/schemas/FarmInput" }
+        weather: { $ref: "#/components/schemas/Weather" }
+        recommendations:
+          type: array
+          items: { $ref: "#/components/schemas/CropRecommendation" }
+        topCrop: { type: string }
+        topScore: { type: number }
+        createdAt: { type: string, format: date-time }
+      required: [id, farm, weather, recommendations, topCrop, topScore, createdAt]
+    Crop:
+      type: object
+      properties:
+        name: { type: string }
+        suitableSoils:
+          type: array
+          items: { type: string }
+        suitableSeasons:
+          type: array
+          items: { type: string }
+        waterRequirement: { type: string }
+        suitableRegions:
+          type: array
+          items: { type: string }
+        weatherRequirements: { type: string }
+        growthDuration: { type: string }
+        rotationCompatibility:
+          type: array
+          items: { type: string }
+        risks:
+          type: array
+          items: { type: string }
+      required: [name, suitableSoils, suitableSeasons, waterRequirement, suitableRegions, weatherRequirements, growthDuration, rotationCompatibility, risks]
+    AdviceInput:
+      type: object
+      properties:
+        analysisId: { type: string, format: uuid }
+      required: [analysisId]
+    Advice:
+      type: object
+      properties:
+        summary: { type: string }
+        recommendedCrop: { type: string }
+        reasons:
+          type: array
+          items: { type: string }
+        actionPlan:
+          type: array
+          items: { type: string }
+        risks:
+          type: array
+          items: { type: string }
+        waterAdvice: { type: string }
+        weatherAdvice: { type: string }
+      required: [summary, recommendedCrop, reasons, actionPlan, risks, waterAdvice, weatherAdvice]
+    Dashboard:
+      type: object
+      properties:
+        totalAnalyses: { type: integer }
+        latest: { oneOf: [{ $ref: "#/components/schemas/Analysis" }, { type: "null" }] }
+        recent:
+          type: array
+          items: { $ref: "#/components/schemas/Analysis" }
+      required: [totalAnalyses, latest, recent]
+

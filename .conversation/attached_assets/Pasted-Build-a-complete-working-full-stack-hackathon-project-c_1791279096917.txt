@@ -1,0 +1,1006 @@
+Build a complete working full-stack hackathon project called:
+
+AGriGuide
+"Smart Crop Recommendation & Farm Advisory System"
+
+IMPORTANT:
+I have very limited Replit Agent credits.
+Build the complete working MVP in ONE execution.
+Do not ask unnecessary questions.
+Do not split the work into phases.
+Do not create unnecessary features.
+Do not stop at a UI prototype.
+Do not leave TODOs.
+Do not create fake buttons or fake API responses.
+After building, run the application and fix compile/runtime errors automatically.
+
+==================================================
+PROBLEM
+==================================================
+
+Build a platform that recommends suitable crops based on:
+
+1. Soil type
+2. Location
+3. Weather
+4. Water availability
+5. Previous crop history
+6. Season
+
+The application should calculate the best crops and then use Gemini to explain the recommendation and provide practical farm advice.
+
+==================================================
+TECH STACK
+==================================================
+
+Frontend:
+- React
+- TypeScript
+- Vite
+- React Router
+- Tailwind CSS
+- Lucide React
+
+Backend:
+- Node.js
+- Express.js
+- bcrypt
+- JWT
+- Zod
+
+Database:
+- Supabase PostgreSQL
+
+AI:
+- Google Gemini API
+- Gemini must ONLY be called from the backend
+
+Weather:
+- Open-Meteo API
+
+Keep dependencies minimal.
+
+==================================================
+APPLICATION STRUCTURE
+==================================================
+
+Create a clean full-stack structure:
+
+/client
+/server
+/shared
+/supabase
+README.md
+.env.example
+
+If the existing Replit project already contains a React/Vite project, reuse it instead of creating another project.
+
+==================================================
+AUTHENTICATION
+==================================================
+
+Implement working:
+
+- Register
+- Login
+- Logout
+- JWT authentication
+- bcrypt password hashing
+- Protected dashboard
+
+Registration:
+
+Full Name
+Email
+Password
+Confirm Password
+
+Login:
+
+Email
+Password
+
+Passwords must be hashed using bcrypt.
+
+Never store plaintext passwords.
+
+Create JWT containing:
+
+userId
+email
+
+Protect:
+
+/dashboard
+/farms
+/analysis
+/history
+/profile
+
+Do not trust userId from the frontend.
+Always get the authenticated user ID from the verified JWT.
+
+==================================================
+DATABASE
+==================================================
+
+Use Supabase PostgreSQL.
+
+Create these tables:
+
+users
+farm_profiles
+analyses
+ai_outputs
+
+users:
+
+id
+full_name
+email
+password_hash
+created_at
+updated_at
+
+farm_profiles:
+
+id
+user_id
+farm_name
+country
+state
+district
+village
+latitude
+longitude
+soil_type
+water_availability
+irrigation_source
+previous_crop
+season
+created_at
+updated_at
+
+analyses:
+
+id
+user_id
+farm_profile_id
+weather_data
+recommendations
+top_crop
+top_score
+risk_data
+created_at
+
+ai_outputs:
+
+id
+user_id
+analysis_id
+summary
+recommended_crop
+reasons
+action_plan
+risks
+water_advice
+weather_advice
+created_at
+
+Add foreign keys and indexes.
+
+All database queries must be restricted to the authenticated user's data.
+
+Enable appropriate Row Level Security where practical and enforce user-level authorization in the backend.
+
+==================================================
+SUPABASE
+==================================================
+
+Use environment variables.
+
+SUPABASE_URL
+SUPABASE_PUBLISHABLE_KEY
+DATABASE_URL
+
+Do not hardcode secrets.
+
+I will add the actual values through Replit Secrets.
+
+Create .env.example with:
+
+SUPABASE_URL=
+SUPABASE_PUBLISHABLE_KEY=
+DATABASE_URL=
+JWT_SECRET=
+GEMINI_API_KEY=
+
+Never put real credentials in .env.example.
+
+==================================================
+CROP KNOWLEDGE BASE
+==================================================
+
+Create a small structured crop dataset containing at least:
+
+Rice
+Maize
+Groundnut
+Cotton
+Red Gram
+Green Gram
+Black Gram
+Chilli
+Tomato
+Onion
+Sorghum
+Pearl Millet
+Finger Millet
+Soybean
+Sugarcane
+Wheat
+Sunflower
+Mustard
+Potato
+Turmeric
+
+Each crop should contain:
+
+name
+suitableSoils
+suitableSeasons
+waterRequirement
+suitableRegions
+weatherRequirements
+growthDuration
+rotationCompatibility
+risks
+
+==================================================
+CORE RECOMMENDATION ENGINE
+==================================================
+
+Do NOT let Gemini decide the crop.
+
+Create a deterministic crop recommendation engine.
+
+Calculate every crop using:
+
+Soil = 25%
+Location = 20%
+Weather = 20%
+Water = 15%
+Previous Crop = 10%
+Season = 10%
+
+Formula:
+
+finalScore =
+soilScore * 0.25 +
+locationScore * 0.20 +
+weatherScore * 0.20 +
+waterScore * 0.15 +
+rotationScore * 0.10 +
+seasonScore * 0.10
+
+Return the TOP 3 crops.
+
+Scores must be between 0 and 100.
+
+Sort highest to lowest.
+
+Changing the input must change the calculated scores appropriately.
+
+Never use random recommendation scores.
+
+==================================================
+SOIL
+==================================================
+
+Support:
+
+Black Soil
+Red Soil
+Alluvial Soil
+Sandy Soil
+Loamy Soil
+Clay Soil
+Laterite Soil
+
+==================================================
+LOCATION
+==================================================
+
+Support:
+
+Country
+State
+District
+Village/City
+
+Include good support for Indian agriculture, especially Andhra Pradesh.
+
+Do not pretend to know exact village-level agricultural data if unavailable.
+
+==================================================
+WATER
+==================================================
+
+Options:
+
+Very Low
+Low
+Moderate
+High
+Very High
+
+Irrigation:
+
+Rain-fed
+Borewell
+Canal
+Well
+River
+Drip
+Sprinkler
+
+Water availability MUST affect the recommendation score.
+
+==================================================
+PREVIOUS CROP
+==================================================
+
+Allow selection of the previous crop.
+
+Use crop rotation compatibility in scoring.
+
+==================================================
+SEASON
+==================================================
+
+Support:
+
+Kharif
+Rabi
+Summer
+
+Season must affect scoring.
+
+==================================================
+WEATHER
+==================================================
+
+Use Open-Meteo.
+
+Use latitude/longitude when available.
+
+Retrieve:
+
+Temperature
+Rainfall
+Humidity
+Wind
+Weather condition
+
+Weather must influence crop scoring.
+
+If live weather fails, do not crash.
+Display a clear fallback message and continue the recommendation using available data.
+
+==================================================
+MAIN USER FLOW
+==================================================
+
+The complete user flow must be:
+
+Landing Page
+↓
+Register/Login
+↓
+Dashboard
+↓
+New Farm Analysis
+↓
+Enter Farm Details
+↓
+Fetch Weather
+↓
+Calculate Crop Suitability
+↓
+Show Top 3 Crops
+↓
+Show Score Breakdown
+↓
+Gemini Farm Advisor
+↓
+Save Analysis
+↓
+History
+
+==================================================
+LANDING PAGE
+==================================================
+
+Create a professional AgriTech landing page.
+
+Title:
+
+AgriGuide
+
+Headline:
+
+"Smart decisions. Better crops. Smarter farming."
+
+Description:
+
+"AgriGuide combines soil, location, weather, water availability and crop history to help farmers choose suitable crops."
+
+Buttons:
+
+Start Farm Analysis
+How It Works
+
+Sections:
+
+Hero
+Problem
+Solution
+How It Works
+Features
+Why AgriGuide
+AI Farm Advisor
+Responsible AI
+Footer
+
+Use a clean agricultural design with green/natural colors.
+
+==================================================
+DASHBOARD
+==================================================
+
+Show:
+
+Welcome [user name]
+
+Total Analyses
+Latest Recommended Crop
+Latest Suitability Score
+
+Recent Analyses
+
+Buttons:
+
+New Farm Analysis
+Farm Profiles
+History
+Profile
+Logout
+
+Use real database data.
+
+==================================================
+FARM ANALYSIS FORM
+==================================================
+
+Create a clean multi-step form.
+
+Step 1:
+Location
+
+Country
+State
+District
+Village/City
+
+Step 2:
+Soil
+
+Soil Type
+
+Step 3:
+Water
+
+Water Availability
+Irrigation Source
+
+Step 4:
+Previous Crop
+
+Previous Crop
+
+Step 5:
+Season
+
+Kharif
+Rabi
+Summer
+
+Step 6:
+Review
+
+Show all entered information.
+
+Button:
+
+"Analyze My Farm"
+
+==================================================
+RESULTS PAGE
+==================================================
+
+Title:
+
+"Your Farm's Best Crop Choices"
+
+Show TOP 3.
+
+For every crop display:
+
+Rank
+Crop Name
+Suitability %
+Water Requirement
+Growth Duration
+Season
+Why Recommended
+Risk Level
+
+Example design:
+
+#1
+GROUNDNUT
+92% Suitable
+
+But DO NOT hardcode Groundnut or 92%.
+The actual recommendation engine must calculate the result.
+
+==================================================
+SCORE BREAKDOWN
+==================================================
+
+For the selected crop display:
+
+Soil Compatibility
+Location Compatibility
+Weather Compatibility
+Water Compatibility
+Previous Crop Compatibility
+Season Compatibility
+
+Use progress bars.
+
+Show the final calculated score.
+
+==================================================
+WHY THIS CROP
+==================================================
+
+Generate an explanation based on the actual scoring factors.
+
+Example:
+
+"Your soil and current water availability are highly compatible with this crop, while the selected season also supports its cultivation."
+
+Do not invent reasons unrelated to the actual calculation.
+
+==================================================
+RISK ANALYSIS
+==================================================
+
+Show:
+
+Water Risk
+Weather Risk
+Soil Compatibility Risk
+Rotation Risk
+
+Levels:
+
+Low
+Moderate
+High
+
+==================================================
+GEMINI AI FARM ADVISOR
+==================================================
+
+Create:
+
+POST /api/ai/advice
+
+Gemini MUST be called ONLY from Express backend.
+
+The frontend must never contain or use GEMINI_API_KEY.
+
+Send Gemini:
+
+Farm details
+Weather
+Top 3 calculated crops
+Scores
+Factor breakdown
+Risks
+
+Gemini must NOT change the ranking.
+
+Gemini is only responsible for:
+
+Explanation
+Action plan
+Risk explanation
+Water advice
+Weather advice
+
+Use this instruction:
+
+"You are AgriGuide's agricultural decision-support assistant. Use only the provided farm data, weather data, crop information and calculated scores. Do not change the crop ranking. Do not invent missing information. Do not guarantee crop yield or profit. Give simple practical farmer-friendly advice. Return only valid JSON."
+
+Expected JSON:
+
+{
+  "summary": "string",
+  "recommendedCrop": "string",
+  "reasons": ["string"],
+  "actionPlan": ["string"],
+  "risks": ["string"],
+  "waterAdvice": "string",
+  "weatherAdvice": "string"
+}
+
+Validate Gemini's response with Zod.
+
+If Gemini fails, the crop recommendation must still work.
+
+Show a friendly error instead of crashing.
+
+==================================================
+HISTORY
+==================================================
+
+Create /history.
+
+Show the authenticated user's saved analyses.
+
+Display:
+
+Date
+Location
+Top Crop
+Suitability Score
+Soil
+Water
+Season
+
+Actions:
+
+View
+Delete
+
+==================================================
+SEARCH / FILTER / SORT
+==================================================
+
+History must support:
+
+Search by crop/location.
+
+Filter by:
+
+Soil
+Water
+Season
+Crop
+
+Sort by:
+
+Newest
+Oldest
+Highest Score
+Lowest Score
+
+==================================================
+CRUD
+==================================================
+
+Implement working CRUD for farm profiles:
+
+Create
+Read
+Update
+Delete
+
+Implement analysis:
+
+Create
+Read
+Delete
+
+All data must belong to the authenticated user.
+
+==================================================
+PROFILE
+==================================================
+
+Show:
+
+Name
+Email
+Account Created
+
+Allow:
+
+Update Name
+Change Password
+
+Never expose password hashes.
+
+==================================================
+API ROUTES
+==================================================
+
+Create clean REST APIs:
+
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/logout
+GET /api/auth/me
+
+GET /api/profile
+PATCH /api/profile
+
+POST /api/farms
+GET /api/farms
+GET /api/farms/:id
+PATCH /api/farms/:id
+DELETE /api/farms/:id
+
+POST /api/analyses
+GET /api/analyses
+GET /api/analyses/:id
+DELETE /api/analyses/:id
+
+GET /api/crops
+
+GET /api/weather
+
+POST /api/ai/advice
+
+GET /api/health
+
+Use proper HTTP status codes and JSON responses.
+
+==================================================
+ZOD
+==================================================
+
+Use Zod for backend validation.
+
+Validate:
+
+Registration
+Login
+Farm input
+Analysis input
+AI input
+AI output
+
+Never rely only on frontend validation.
+
+==================================================
+SECURITY
+==================================================
+
+Implement:
+
+bcrypt
+JWT
+Authentication middleware
+Authorization
+User data isolation
+Zod validation
+Environment variables
+Secure error handling
+No frontend Gemini key
+No secrets committed to GitHub
+
+Never return password_hash.
+
+==================================================
+RESPONSIVE DESIGN
+==================================================
+
+The application must work on:
+
+Mobile
+Tablet
+Desktop
+
+Especially optimize for Android phones.
+
+No horizontal scrolling.
+
+Buttons must be touch friendly.
+
+Cards must stack on mobile.
+
+Navigation must work on mobile.
+
+==================================================
+LANGUAGE SELECTOR
+==================================================
+
+Add:
+
+English
+Telugu
+Hindi
+
+The selector should change the major UI labels, buttons and headings.
+
+==================================================
+DEMO FARM
+==================================================
+
+Add a "Try Demo Farm" button.
+
+Use:
+
+India
+Andhra Pradesh
+Kadapa
+Red Soil
+Moderate Water
+Borewell
+Maize
+Kharif
+
+Use live weather if available.
+
+Run the REAL recommendation engine.
+
+Do not hardcode the final crop.
+
+==================================================
+IMPORTANT DEMO
+==================================================
+
+The system must allow the judge to change:
+
+Water = Moderate
+
+to:
+
+Water = Very Low
+
+and run the analysis again.
+
+The scores should change because Water has a 15% weight.
+
+This must happen through the real recommendation algorithm.
+
+==================================================
+RESPONSIBLE AI
+==================================================
+
+Display:
+
+"AgriGuide provides AI-assisted decision support and does not guarantee yield, profit or crop success. Farmers should validate recommendations with local agricultural experts and current field conditions."
+
+==================================================
+DOCUMENTATION
+==================================================
+
+Create a concise professional README.md containing:
+
+Problem
+Solution
+Features
+Tech Stack
+Architecture
+Database
+Authentication
+Recommendation Algorithm
+Gemini Integration
+Security
+Setup
+Environment Variables
+Deployment
+Demo Flow
+
+Also create:
+
+docs/ARCHITECTURE.md
+docs/AI-INTEGRATION.md
+
+Keep documentation concise and useful.
+
+==================================================
+ERROR HANDLING
+==================================================
+
+Handle:
+
+Invalid login
+Invalid forms
+Unauthorized access
+Database errors
+Weather API failure
+Gemini failure
+Network errors
+
+Never show a blank page.
+
+Never expose stack traces or secrets.
+
+==================================================
+DEPLOYMENT
+==================================================
+
+Configure the application for Replit deployment.
+
+Ensure:
+
+npm install works
+npm run dev works
+npm run build works
+production start works
+
+If using one Replit deployment, configure Express to serve the built React frontend.
+
+==================================================
+FINAL TEST
+==================================================
+
+Before finishing, test the complete flow:
+
+1. Register
+2. Login
+3. Dashboard
+4. Create farm
+5. Weather
+6. Recommendation
+7. Top 3 crops
+8. Score breakdown
+9. Gemini advice
+10. Save analysis
+11. History
+12. Search
+13. Filter
+14. Sort
+15. Edit farm
+16. Delete farm
+17. Logout
+18. Protected route
+19. Mobile layout
+
+Fix all compile and runtime errors you encounter.
+
+==================================================
+FINAL RULE
+==================================================
+
+DO NOT give me a tutorial.
+
+DO NOT give me code snippets instead of building.
+
+DO NOT stop after creating the frontend.
+
+DO NOT create fake data for the main functionality.
+
+DO NOT ask me to send another prompt.
+
+BUILD THE COMPLETE WORKING AGRIGUIDE APPLICATION NOW.
+
+If credentials are missing, create the application so it works once these environment variables are added:
+
+SUPABASE_URL
+SUPABASE_PUBLISHABLE_KEY
+DATABASE_URL
+JWT_SECRET
+GEMINI_API_KEY
+
+Use Replit Secrets for them.
+
+After implementation, run the application and fix all errors possible within the project.
+
+The final result must be a polished, working, hackathon-ready AgriGuide application.
